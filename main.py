@@ -9,13 +9,33 @@ from io import BytesIO
 from selenium import webdriver
 # from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.options import Options
-from selenium.webdriver.edge.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 
 import os
 import sys
+
+USE_DRIVER = "Edge"
+
+WEBDRIVER_EXECUTABLE_NAME = {
+    "Chrome": "chromedriver.exe",
+    "Edge": "msedgedriver.exe",
+    "Firefox": "geckodriver.exe"
+}
+
+
+if USE_DRIVER == "Chrome":
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+elif USE_DRIVER == "Edge":
+    from selenium.webdriver.edge.options import Options
+    from selenium.webdriver.edge.service import Service
+elif USE_DRIVER == "Firefox":
+    from selenium.webdriver.firefox.options import Options
+    from selenium.webdriver.firefox.service import Service
+else:
+    print("Not Supported !")
+    exit(-1)
 
 
 LOL_AREAS_ID = {
@@ -53,11 +73,12 @@ SUMMONER_NAME_PATTERN = re.compile('(?<=(summonerName=)).*?(?=&)')
 
 
 def get_driver_path():
-    if os.path.isfile(os.path.join(os.path.dirname(sys.argv[0]), "msedgedriver.exe")):
-        return os.path.join(os.path.dirname(sys.argv[0]), "msedgedriver.exe")
+    if os.path.isfile(os.path.join(os.path.dirname(sys.argv[0]), WEBDRIVER_EXECUTABLE_NAME[USE_DRIVER])):
+        return os.path.join(os.path.dirname(sys.argv[0]), WEBDRIVER_EXECUTABLE_NAME[USE_DRIVER])
+    # 若使用pyInstaller打包
     try:
-        if os.path.isfile(os.path.join(sys._MEIPASS, "msedgedriver.exe")):
-            return os.path.join(sys._MEIPASS, "msedgedriver.exe")
+        if os.path.isfile(os.path.join(sys._MEIPASS, WEBDRIVER_EXECUTABLE_NAME[USE_DRIVER])):
+            return os.path.join(sys._MEIPASS, WEBDRIVER_EXECUTABLE_NAME[USE_DRIVER])
     except AttributeError:
         return None
     return None
