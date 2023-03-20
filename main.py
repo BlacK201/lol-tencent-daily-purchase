@@ -113,13 +113,17 @@ class LoginQQDaoju:
         ).click()
 
     def get_qrcode(self):
-        self.browser.switch_to.frame("loginIframe")
+        login_frame = self.wait.until(
+            ec.presence_of_element_located((By.XPATH, "//iframe[@class='loginframe']"))
+        )
+        self.browser.switch_to.frame(login_frame)
+        self.browser.switch_to.frame("ptlogin_iframe")
+
         get_screenshot_as_png = self.wait.until(
             ec.presence_of_element_located((By.ID, "qrlogin_img"))
         ).screenshot_as_png
         stream = BytesIO(get_screenshot_as_png)
         i = Image.open(stream)
-        print("Image loaded.")
         print("请尽快扫码登录.")
         i.show()
 
@@ -134,6 +138,8 @@ class LoginQQDaoju:
 
 
 if __name__ == '__main__':
+    # TODO 目前不能从cookie中获取用户QQ号了, 暂时不知道如何解决
+    user_qq = input("请输入您的QQ号")
     instance = LoginQQDaoju()
     instance.open()
     instance.get_qrcode()
@@ -154,7 +160,7 @@ if __name__ == '__main__':
         url = "https://apps.game.qq.com/daoju/igw/main?_service=buy.plug.svr.sysc_ext&paytype=8&iActionId=22565" \
               "&propid=338943&buyNum=1&_app_id=1006&_plug_id=72007&_biz_code=lol&areaid={0}&roleid={1}&source=4_0" \
               "&reportUserUin={1}"\
-            .format(area_id, s.cookies.get("uin")[2:])
+            .format(area_id, user_qq)  # s.cookies.get("uin")[2:])
         res = s.get(url)
         res_text = res.text
         json_obj = json.loads(res.text)
