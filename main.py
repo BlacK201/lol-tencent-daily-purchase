@@ -164,7 +164,7 @@ if __name__ == '__main__':
         except Exception:
             msg = json_obj['msg']
         print("{0}  {1}".format(LOL_AREAS_ID[area_id], msg))
-        time.sleep(0.8)
+        time.sleep(1.5)
     print("执行完成。")
     input()
     raise Exception()
