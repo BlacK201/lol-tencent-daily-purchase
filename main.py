@@ -23,7 +23,6 @@ WEBDRIVER_EXECUTABLE_NAME = {
     "Firefox": "geckodriver.exe"
 }
 
-
 if USE_DRIVER == "Chrome":
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.chrome.service import Service
@@ -36,7 +35,6 @@ elif USE_DRIVER == "Firefox":
 else:
     print("Not Supported !")
     exit(-1)
-
 
 LOL_AREAS_ID = {
     1: "电信 艾欧尼亚",
@@ -82,6 +80,19 @@ def get_driver_path():
     except AttributeError:
         return None
     return None
+
+
+def calc_p_tk(access_token):
+    hash_code = 5381
+    for let in access_token[22:32]:
+        hash_code += (hash_code << 5) + ord(let)
+    return str(hash_code & 0x7fffffff)
+
+
+def get_response_json_str(resp):
+    pattern = re.compile("{.*}")
+    match = pattern.search(resp)
+    return match.group()
 
 
 class LoginQQDaoju:
@@ -138,8 +149,6 @@ class LoginQQDaoju:
 
 
 if __name__ == '__main__':
-    # TODO 目前不能从cookie中获取用户QQ号了, 暂时不知道如何解决
-    user_qq = input("请输入您的QQ号")
     instance = LoginQQDaoju()
     instance.open()
     instance.get_qrcode()
@@ -153,14 +162,30 @@ if __name__ == '__main__':
         "referer": "https://lol.qq.com/",
         "accept-encoding": "gzip",
     }
+
     for cookie in cookies:
         s.cookies.set(cookie['name'], cookie['value'])
+
+    try:
+        user_info_link = "https://apps.game.qq.com/daoju/igw/main?_service=welink.member.main.swoole&c=Member&a=Business&optype=get_baseinfo&_jsvar=userinfo&view_type=deal_info%2Cbasic_info%2Caccount_info%2Csocial_info" \
+                         "&acctype={0}&openid={1}&appid=1101958653&access_token={2}&p_tk={3}&_={4}".format(
+            s.cookies.get("acctype"),
+            s.cookies.get("openid"),
+            s.cookies.get("access_token"),
+            calc_p_tk(s.cookies.get("access_token")),
+            int(round(time.time() * 1000))
+        )
+        user_info_res = s.get(user_info_link)
+        user_info_json = json.loads(get_response_json_str(user_info_res.text))
+    except Exception as e:
+        print(e.with_traceback())
+        exit(0)
 
     for area_id in LOL_AREAS_ID:
         url = "https://apps.game.qq.com/daoju/igw/main?_service=buy.plug.svr.sysc_ext&paytype=8&iActionId=22565" \
               "&propid=338943&buyNum=1&_app_id=1006&_plug_id=72007&_biz_code=lol&areaid={0}&roleid={1}&source=4_0" \
-              "&reportUserUin={1}"\
-            .format(area_id, user_qq)  # s.cookies.get("uin")[2:])
+              "&reportUserUin={1}" \
+            .format(area_id, user_info_json['data'][0]['lUin'])  # s.cookies.get("uin")[2:])
         res = s.get(url)
         res_text = res.text
         json_obj = json.loads(res.text)
